@@ -1326,9 +1326,9 @@ static void
 dlmgmt_zonehalt(void *argp, void *retp, size_t *sz, zoneid_t zoneid,
     ucred_t *cred)
 {
-	int			err = 0;
-	dlmgmt_door_zonehalt_t	*zonehalt = argp;
-	dlmgmt_zonehalt_retval_t *retvalp = retp;
+	int err = 0;
+	dlmgmt_door_zonehalt_t		*zonehalt = argp;
+	dlmgmt_zonehalt_retval_t 	*retvalp = retp;
 	static char my_pid[10];
 
 	if (my_pid[0] == NULL)
@@ -1357,11 +1357,17 @@ dlmgmt_zonehalt(void *argp, void *retp, size_t *sz, zoneid_t zoneid,
 			while ((fd = open(ZONE_LOCK, O_WRONLY |
 			    O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)) < 0)
 				(void) sleep(1);
+
 			(void) write(fd, my_pid, sizeof(my_pid));
-        		(void) close(fd);
+			(void) close(fd);
 
 			dlmgmt_table_lock(B_TRUE);
-			dlmgmt_db_fini(zonehalt->ld_zoneid);
+
+			if ((err = dlmgmt_db_fini(zonehalt->ld_zoneid)) != 0) {
+				dlmgmt_log(LOG_WARNING, "dlmgmt_zonehalt: "
+					"dlmgmt_db_fini returned an error");
+			}
+
 			dlmgmt_table_unlock();
 
 			(void) unlink(ZONE_LOCK);

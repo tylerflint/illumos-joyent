@@ -5096,6 +5096,7 @@ vplat_teardown(zlog_t *zlogp, boolean_t unmount_cmd, boolean_t rebooting,
 				zerror(zlogp, B_FALSE, "unable to notify "
 				    "dlmgmtd of zone halt: %s",
 				    dladm_status2str(status, errmsg));
+				goto error;
 			}
 			break;
 		}

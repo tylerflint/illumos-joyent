@@ -347,6 +347,30 @@ dlmgmt_table_unlock(void)
 }
 
 void
+dlmgmt_table_readupgrade(void)
+{
+	(void) pthread_mutex_lock(&dlmgmt_avl_mutex);
+	(void) pthread_rwlock_unlock(&dlmgmt_avl_lock);
+
+	while (dlmgmt_table_readwritelock(B_TRUE) == EBUSY){
+		dlmgmt_table_readwritelock(B_FALSE);
+		(void) pthread_cond_wait(&dlmgmt_avl_cv, &dlmgmt_avl_mutex);
+		(void) pthread_rwlock_unlock(&dlmgmt_avl_lock);
+	}
+
+	(void) pthread_mutex_unlock(&dlmgmt_avl_mutex);
+}
+
+void
+dlmgmt_table_writedowngrade(void)
+{
+	(void) pthread_mutex_lock(&dlmgmt_avl_mutex);
+	(void) pthread_rwlock_unlock(&dlmgmt_avl_lock);
+	assert(dlmgmt_table_readwritelock(B_FALSE) != EBUSY);
+	(void) pthread_mutex_unlock(&dlmgmt_avl_mutex);
+}
+
+void
 link_destroy(dlmgmt_link_t *linkp)
 {
 	linkattr_destroy(linkp);

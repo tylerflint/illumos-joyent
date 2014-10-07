@@ -1499,10 +1499,11 @@ done:
 /*
  * Remove all links in the given zoneid.
  */
-void
+int
 dlmgmt_db_fini(zoneid_t zoneid)
 {
 	dlmgmt_link_t *linkp = avl_first(&dlmgmt_name_avl), *next_linkp;
+	int ret = 0;
 
 	while (linkp != NULL) {
 		next_linkp = AVL_NEXT(&dlmgmt_name_avl, linkp);
@@ -1512,25 +1513,39 @@ dlmgmt_db_fini(zoneid_t zoneid)
 
 			ioc.vd_vnic_id = linkp->ll_linkid;
 			onloan = linkp->ll_onloan;
+			
 
-			/*
-			 * Cleanup any VNICs that were loaned to the zone
-			 * before the zone goes away and we can no longer
-			 * refer to the VNIC by the name/zoneid.
-			 */
-			if (onloan)
-				(void) dlmgmt_delete_db_entry(linkp,
-				    DLMGMT_ACTIVE);
+			if (onloan){
+				dlmgmt_table_writedowngrade();
+
+				if(ioctl(dladm_dld_fd(dld_handle),
+					VNIC_IOC_DELETE, &ioc) == 0){
+						dlmgmt_table_readupgrade();
+
+						/*
+						 * Cleanup any VNICs that were loaned to the zone
+						 * before the zone goes away and we can no longer
+						 * refer to the VNIC by the name/zoneid.
+						 */
+						(void) dlmgmt_delete_db_entry(linkp,
+						    DLMGMT_ACTIVE);
+
+						
+				}else{
+					dlmgmt_log(LOG_WARNING, "dlmgmt_db_fini "
+					    "delete VNIC ioctl failed %d %d",
+					    ioc.vd_vnic_id, errno);
+					dlmgmt_table_readupgrade();
+					ret = 1;
+					linkp = next_linkp;
+					continue;
+				}
+			}
 
 			(void) dlmgmt_destroy_common(linkp,
 			    DLMGMT_ACTIVE | DLMGMT_PERSIST);
-
-			if (onloan && ioctl(dladm_dld_fd(dld_handle),
-			    VNIC_IOC_DELETE, &ioc) < 0)
-				dlmgmt_log(LOG_WARNING, "dlmgmt_db_fini "
-				    "delete VNIC ioctl failed %d %d",
-				    ioc.vd_vnic_id, errno);
 		}
 		linkp = next_linkp;
 	}
+	return ret;
 }

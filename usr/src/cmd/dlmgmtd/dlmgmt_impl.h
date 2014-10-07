@@ -119,6 +119,8 @@ int		dlmgmt_getattr_common(dlmgmt_linkattr_t **, const char *,
 		    dlmgmt_getattr_retval_t *);
 
 void		dlmgmt_advance(dlmgmt_link_t *);
+void		dlmgmt_table_readupgrade();
+void		dlmgmt_table_writedowngrade();
 void		dlmgmt_table_lock(boolean_t);
 void		dlmgmt_table_unlock();
 
@@ -142,7 +144,7 @@ void		dlmgmt_log(int, const char *, ...);
 int		dlmgmt_write_db_entry(const char *, dlmgmt_link_t *, uint32_t);
 int		dlmgmt_delete_db_entry(dlmgmt_link_t *, uint32_t);
 int 		dlmgmt_db_init(zoneid_t, char *);
-void		dlmgmt_db_fini(zoneid_t);
+int		dlmgmt_db_fini(zoneid_t);
 
 #ifdef  __cplusplus
 }
