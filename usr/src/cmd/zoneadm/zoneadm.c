@@ -786,6 +786,7 @@ lookup_running_zone(const char *str)
 		return (NULL);
 
 	if (lookup_zone_info(str, zid, zent) != Z_OK) {
+		free(zent);
 		return (NULL);
 	} else {
 		return (zent);
