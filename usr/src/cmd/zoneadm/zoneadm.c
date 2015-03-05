@@ -776,16 +776,20 @@ zone_print_list(zone_state_t min_state, boolean_t verbose, boolean_t parsable)
 static zone_entry_t *
 lookup_running_zone(const char *str)
 {
-	int i;
+	zoneid_t zid;
+	zone_entry_t *zent;
 
-	if (fetch_zents() != Z_OK)
+	if ((zid = getzoneidbyname(str)) == -1)
 		return (NULL);
 
-	for (i = 0; i < nzents; i++) {
-		if (strcmp(str, zents[i].zname) == 0)
-			return (&zents[i]);
+	if ((zent = malloc(sizeof (zone_entry_t))) == NULL)
+		return (NULL);
+
+	if (lookup_zone_info(str, zid, zent) != Z_OK) {
+		return (NULL);
+	} else {
+		return (zent);
 	}
-	return (NULL);
 }
 
 /*
