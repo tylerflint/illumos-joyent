@@ -774,18 +774,18 @@ zone_print_list(zone_state_t min_state, boolean_t verbose, boolean_t parsable)
  * Retrieve a zone entry by name.  Returns NULL if no such zone exists.
  */
 static zone_entry_t *
-lookup_running_zone(const char *str)
+lookup_running_zone(const char *name)
 {
 	zoneid_t zid;
 	zone_entry_t *zent;
 
-	if ((zid = getzoneidbyname(str)) == -1)
+	if ((zid = getzoneidbyname(name)) == -1)
 		return (NULL);
 
 	if ((zent = malloc(sizeof (zone_entry_t))) == NULL)
 		return (NULL);
 
-	if (lookup_zone_info(str, zid, zent) != Z_OK) {
+	if (lookup_zone_info(name, zid, zent) != Z_OK) {
 		free(zent);
 		return (NULL);
 	} else {
